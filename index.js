@@ -28,6 +28,9 @@ async function run() {
         await client.connect();
         const database = client.db("aiverse");
         const promtsCollection = database.collection("promts");
+        const usersCollection = database.collection('user')
+         const planCollection = database.collection('plans');
+        const subscriptionCollection = database.collection('subscriptions');
          app.post("/api/promts", async (req, res) => {
             const promt = req.body;
             const newPromt = {
@@ -53,6 +56,35 @@ async function run() {
             const result = await promtsCollection.findOne(query);
             res.send(result || {});
         });
+        app.get('/api/plans', async (req, res) => {
+            const query = {}
+            if (req.query.plan_id) {
+                query.id = req.query.plan_id
+            }
+            const plan = await planCollection.findOne(query);
+            res.send(plan || {}) 
+        })
+        app.post('/api/subscriptions', async (req, res) => {
+            const data = req.body;
+            const subsInfo = {
+                ...data,
+                createdAt: new Date()
+            }
+
+            const result = await subscriptionCollection.insertOne(subsInfo);
+
+            // update the user plan information
+            const filter = { email: data.email };
+            // update the value of the 'quantity' field to 5
+            const updateDocument = {
+                $set: {
+                    plan: data.planId,
+                },
+            };
+
+            const updateResult = await usersCollection.updateOne(filter, updateDocument);
+            res.send(updateResult)
+        })
         await client.db("admin").command({ ping: 1 });
         console.log(
             "Pinged your deployment. You successfully connected to MongoDB!",
