@@ -87,8 +87,8 @@ async function run() {
 
         // ২. আপনার ডাটাবেজ আপডেট কুয়েরি (যেমন Mongoose/MongoDB হলে)
         const result = await promtsCollection.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: updatedData }
+          { _id: new ObjectId(id) },
+          { $set: updatedData },
         );
 
         // ৩. ফ্রন্টএন্ডে সাকসেস রেসপন্স পাঠানো
@@ -135,6 +135,48 @@ async function run() {
       };
       const result = await promtsCollection.updateOne(filter, updatedDoc);
       res.send(result);
+    });
+    app.patch("/api/promt/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        // ১. ভ্যালিড অবজেক্ট আইডি চেক করা (নিরাপত্তার জন্য)
+        if (!ObjectId.isValid(id)) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Invalid Prompt ID" });
+        }
+
+        const filter = { _id: new ObjectId(id) };
+
+        // ২. মঙ্গোডিবির $inc অপারেটর ব্যবহার করে copyCount ১ বাড়ানো
+        const updatedDoc = {
+          $inc: {
+            copyCount: 1, // প্রতি ক্লিকে ১ করে স্বয়ংক্রিয়ভাবে বাড়বে
+          },
+        };
+
+        const result = await promtsCollection.updateOne(filter, updatedDoc);
+
+        // ৩. ফ্রন্টএন্ডের `serverMutation` এর সাথে ম্যাচ রেখে জেসন রেসপন্স পাঠানো
+        if (result.modifiedCount > 0) {
+          return res.status(200).json({
+            success: true,
+            message: "Copy count updated successfully!",
+          });
+        } else {
+          return res.status(404).json({
+            success: false,
+            message: "Prompt not found or count not changed",
+          });
+        }
+      } catch (error) {
+        console.error("Error updating copy count:", error);
+        return res.status(500).json({
+          success: false,
+          message: "Internal server error",
+        });
+      }
     });
     app.post("/api/subscriptions", async (req, res) => {
       const data = req.body;
