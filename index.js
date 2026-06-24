@@ -75,7 +75,37 @@ async function run() {
         });
       }
     });
-   
+    // PUT বা PATCH মেথড ব্যবহার করতে হবে
+    app.put("/api/editpromt/:id", async (req, res) => {
+      try {
+        // ১. ইউআরএল থেকে আইডি এবং বডি থেকে এডিট করা ডাটা নেওয়া
+        const { id } = req.params;
+        const updatedData = req.body;
+
+        console.log("Updating Prompt ID:", id);
+        console.log("New Data received:", updatedData);
+
+        // ২. আপনার ডাটাবেজ আপডেট কুয়েরি (যেমন Mongoose/MongoDB হলে)
+        const result = await promtsCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updatedData }
+        );
+
+        // ৩. ফ্রন্টএন্ডে সাকসেস রেসপন্স পাঠানো
+        return res.status(200).json({
+          success: true,
+          message: "Prompt updated successfully!",
+          // data: result // ইচ্ছে হলে ডাটাবেজের রেজাল্টও পাঠাতে পারেন
+        });
+      } catch (error) {
+        console.error("Edit API Error:", error);
+        return res.status(500).json({
+          success: false,
+          message: "Internal server error",
+          error: error.message,
+        });
+      }
+    });
     app.get("/api/promts/:id", async (req, res) => {
       const id = req.params.id;
       const query = {
