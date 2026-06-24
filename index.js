@@ -30,6 +30,7 @@ async function run() {
     const promtsCollection = database.collection("promts");
     const usersCollection = database.collection("user");
     const planCollection = database.collection("plans");
+    const reviewsCollection = database.collection("reviews");
     const subscriptionCollection = database.collection("subscriptions");
     app.post("/api/promts", async (req, res) => {
       const promt = req.body;
@@ -41,6 +42,16 @@ async function run() {
       const result = await promtsCollection.insertOne(newPromt);
       res.send(result);
     });
+    app.post("/api/reviews", async (req, res) => {
+      const promt = req.body;
+      const newPromt = {
+        ...promt,
+        createdAt: new Date(),
+      };
+      console.log("promts", newPromt);
+      const result = await reviewsCollection.insertOne(newPromt);
+      res.send(result);
+    });
     app.get("/api/promts", async (req, res) => {
       const cursor = promtsCollection.find();
       const result = await cursor.toArray();
@@ -48,6 +59,11 @@ async function run() {
     });
     app.get("/api/subscriptions", async (req, res) => {
       const cursor = subscriptionCollection.find();
+      const result = await cursor.toArray();
+      res.send(result || {});
+    });
+    app.get("/api/reviews", async (req, res) => {
+      const cursor = reviewsCollection.find();
       const result = await cursor.toArray();
       res.send(result || {});
     });
