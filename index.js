@@ -47,6 +47,12 @@ async function run() {
             const result = await cursor.toArray();
             res.send(result || {});
         });
+        app.get( '/api/subscriptions' , async (req, res) => {
+           
+            const cursor =  subscriptionCollection.find();
+            const result = await cursor.toArray();
+            res.send(result || {});
+        })
         app.get("/api/promts/:id", async (req, res) => {
             const id = req.params.id;
             const query = {
@@ -64,6 +70,7 @@ async function run() {
             const plan = await planCollection.findOne(query);
             res.send(plan || {}) 
         })
+        
         app.patch('/api/promts/:id', async (req, res) => {
             const id = req.params.id;
             const updatedStatus = req.body;
