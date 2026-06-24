@@ -64,6 +64,18 @@ async function run() {
             const plan = await planCollection.findOne(query);
             res.send(plan || {}) 
         })
+        app.patch('/api/promts/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedStatus = req.body;
+            const filter = { _id: new ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    status: updatedStatus.status
+                }
+            }
+            const result = await promtsCollection.updateOne(filter, updatedDoc);
+            res.send(result);
+        })
         app.post('/api/subscriptions', async (req, res) => {
             const data = req.body;
             const subsInfo = {
