@@ -32,6 +32,20 @@ async function run() {
     const planCollection = database.collection("plans");
     const reviewsCollection = database.collection("reviews");
     const subscriptionCollection = database.collection("subscriptions");
+
+    const verifyToken = (req, res, next) => {
+      console.log("headers", req.headers);
+      const authHeader = req.headers?.authorization;
+      if (!authHeader) {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      const token = authHeader.split(" ")[1];
+      if (!token) {
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      next();
+    };
+
     app.post("/api/promts", async (req, res) => {
       const promt = req.body;
       const newPromt = {
@@ -52,17 +66,17 @@ async function run() {
       const result = await reviewsCollection.insertOne(newPromt);
       res.send(result);
     });
-    app.get("/api/promts", async (req, res) => {
+    app.get("/api/promts", verifyToken, async (req, res) => {
       const cursor = promtsCollection.find();
       const result = await cursor.toArray();
       res.send(result || {});
     });
-    app.get("/api/subscriptions", async (req, res) => {
+    app.get("/api/subscriptions", verifyToken, async (req, res) => {
       const cursor = subscriptionCollection.find();
       const result = await cursor.toArray();
       res.send(result || {});
     });
-    app.get("/api/reviews", async (req, res) => {
+    app.get("/api/reviews", verifyToken, async (req, res) => {
       const cursor = reviewsCollection.find();
       const result = await cursor.toArray();
       res.send(result || {});
@@ -122,7 +136,7 @@ async function run() {
         });
       }
     });
-    app.get("/api/promts/:id", async (req, res) => {
+    app.get("/api/promts/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id),
