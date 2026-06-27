@@ -24,10 +24,11 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    
+    // await client.connect();
     const database = client.db("aiverse");
     const promtsCollection = database.collection("promts");
+    // const usersCollection = database.collection("user");
     const usersCollection = database.collection("user");
     const planCollection = database.collection("plans");
     const reviewsCollection = database.collection("reviews");
@@ -66,33 +67,44 @@ async function run() {
       const result = await reviewsCollection.insertOne(newPromt);
       res.send(result);
     });
-    app.get("/api/promts", verifyToken, async (req, res) => {
-      const cursor = promtsCollection.find();
+    app.get("/api/promts",  async (req, res) => {
+      const {page=1 , limit=3} = req.query;
+      const skip = (Number(page) - 1) * Number(limit);
+      const result = await promtsCollection.find().skip(skip).limit(Number(limit)).toArray();
+      // const result = await cursor.toArray();
+      const totalData = await promtsCollection.countDocuments();
+      const totalPage = Math.ceil(totalData/Number(limit));
+      res.send({data:result , page:Number(page), totalPage} || {});
+      // const result = await promtsCollection.find().toArray();
+      // res.send(result || {});
+    });
+    app.get("/api/users",  async (req, res) => {
+      const cursor = usersCollection.find();
       const result = await cursor.toArray();
       res.send(result || {});
     });
-    app.get("/api/subscriptions", verifyToken, async (req, res) => {
+    app.get("/api/subscriptions", async (req, res) => {
       const cursor = subscriptionCollection.find();
       const result = await cursor.toArray();
       res.send(result || {});
     });
-    app.get("/api/reviews", verifyToken, async (req, res) => {
+    app.get("/api/reviews", async (req, res) => {
       const cursor = reviewsCollection.find();
       const result = await cursor.toArray();
       res.send(result || {});
     });
     app.delete("/api/deletePromt/:id", async (req, res) => {
       try {
-        // ১. ইউআরএল থেকে আইডি বের করা
+        
         const { id } = req.params;
         console.log("ID received for deletion:", id);
 
-        // ২. আপনার ডাটাবেজ ডিলিট কুয়েরি (যেমন Mongoose বা MongoDB)
+        
         const result = await promtsCollection.deleteOne({
           _id: new ObjectId(id),
         });
 
-        // ৩. ফ্রন্টএন্ডে সফল রেসপন্স পাঠানো
+        
         return res.status(200).json({
           success: true,
           message: "Prompt deleted successfully",
@@ -105,27 +117,27 @@ async function run() {
         });
       }
     });
-    // PUT বা PATCH মেথড ব্যবহার করতে হবে
+    
     app.put("/api/editpromt/:id", async (req, res) => {
       try {
-        // ১. ইউআরএল থেকে আইডি এবং বডি থেকে এডিট করা ডাটা নেওয়া
+       
         const { id } = req.params;
         const updatedData = req.body;
 
         console.log("Updating Prompt ID:", id);
         console.log("New Data received:", updatedData);
 
-        // ২. আপনার ডাটাবেজ আপডেট কুয়েরি (যেমন Mongoose/MongoDB হলে)
+        
         const result = await promtsCollection.updateOne(
           { _id: new ObjectId(id) },
           { $set: updatedData },
         );
 
-        // ৩. ফ্রন্টএন্ডে সাকসেস রেসপন্স পাঠানো
+        
         return res.status(200).json({
           success: true,
           message: "Prompt updated successfully!",
-          // data: result // ইচ্ছে হলে ডাটাবেজের রেজাল্টও পাঠাতে পারেন
+          
         });
       } catch (error) {
         console.error("Edit API Error:", error);
@@ -136,7 +148,7 @@ async function run() {
         });
       }
     });
-    app.get("/api/promts/:id",verifyToken, async (req, res) => {
+    app.get("/api/promts/:id", async (req, res) => {
       const id = req.params.id;
       const query = {
         _id: new ObjectId(id),
@@ -170,7 +182,7 @@ async function run() {
       try {
         const id = req.params.id;
 
-        // ১. ভ্যালিড অবজেক্ট আইডি চেক করা (নিরাপত্তার জন্য)
+        
         if (!ObjectId.isValid(id)) {
           return res
             .status(400)
@@ -179,16 +191,16 @@ async function run() {
 
         const filter = { _id: new ObjectId(id) };
 
-        // ২. মঙ্গোডিবির $inc অপারেটর ব্যবহার করে copyCount ১ বাড়ানো
+        
         const updatedDoc = {
           $inc: {
-            copyCount: 1, // প্রতি ক্লিকে ১ করে স্বয়ংক্রিয়ভাবে বাড়বে
+            copyCount: 1,
           },
         };
 
         const result = await promtsCollection.updateOne(filter, updatedDoc);
 
-        // ৩. ফ্রন্টএন্ডের `serverMutation` এর সাথে ম্যাচ রেখে জেসন রেসপন্স পাঠানো
+        
         if (result.modifiedCount > 0) {
           return res.status(200).json({
             success: true,
@@ -217,9 +229,9 @@ async function run() {
 
       const result = await subscriptionCollection.insertOne(subsInfo);
 
-      // update the user plan information
+      
       const filter = { email: data.email };
-      // update the value of the 'quantity' field to 5
+      
       const updateDocument = {
         $set: {
           plan: data.planId,
@@ -232,7 +244,7 @@ async function run() {
       );
       res.send(updateResult);
     });
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
